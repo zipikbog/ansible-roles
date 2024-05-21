@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp1
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: zipik/nodjs-server:1.x
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/write-back-target: helm:helmcharts/helm-app/test-values.yaml
+spec:
+  project: default
+  destination:
+    name: in-cluster
+    namespace: app1
+  source:
+    path: "helmcharts/helm-app"
+    helm:
+      valueFiles:
+        - test-values.yaml
+    repoURL: "git@github.com:zipikbog/argocd-test.git"
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

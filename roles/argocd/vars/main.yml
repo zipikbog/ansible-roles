@@ -1,0 +1,3 @@
+---
+# vars file for singleurl
+argo_password: "{{ decoded_password.stdout }}"

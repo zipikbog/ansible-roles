@@ -1,0 +1,25 @@
+- hosts: k3s-masters
+  become: true
+  tasks:
+    - name: Download argocd
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml
+        dest: ~/argocd.yaml
+        mode: '0664'
+
+    - name: install argocd
+      kubernetes.core.k8s:
+        namespace: argocd
+        src: ~/argocd.yaml
+        state: present
+
+    - name: delete temp file
+      file:
+       path: ~/argocd.yaml
+       state: absent
+
+    - name: Download argocd
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/manifests/install.yaml
+        dest: ~/argocd.yaml
+        mode: '0664'

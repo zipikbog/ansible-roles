@@ -1,0 +1,10 @@
+---
+# defaults file for singleurl
+# Override default flannel interface
+interface: "eth1"
+# Shared secret used to join a server or agent to a cluster
+token: "1234"
+# the path k3s.yaml
+k3s_yaml_path: "./k3s.yaml"
+
+ip_k3s_master: "https://192.168.10.55:6443"

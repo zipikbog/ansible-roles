@@ -1,0 +1,36 @@
+---
+# tasks file for singleurl
+
+- name: check version
+  shell: kubectl version
+  ignore_errors: yes
+  register: kubectl_version
+
+# block to avoid writing when
+
+- name: install kubectl
+  when: kubectl_version is failed
+  block:
+    - name: curl kubectl
+      shell: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+    - name: install kubectl
+      shell: install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# - name: kubeconfig k3s
+#   shell: cat /etc/rancher/k3s/k3s.yaml > /root/.kube/config
+
+- name: copy k3s config
+  ansible.builtin.copy:
+    src: "{{ kubeconfigfile }}"
+    dest: /root/.kube/config
+    mode: '0755'
+
+- name: version 
+  shell: sudo kubectl get nodes
+  register: kubectl_output
+
+- name: test debug
+  debug:
+    msg: "{{ kubectl_output }}"
+

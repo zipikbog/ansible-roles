@@ -1,0 +1,33 @@
+---
+# tasks file for singleurl
+- name: get k3s version
+  shell: k3s --version
+  ignore_errors: yes
+  register: k3s_version
+# block to avoid writing when
+- name: install k3s
+  when: k3s_version is failed
+  block:
+    # create dir for k3s config
+    - name: create dir
+      ansible.builtin.file:
+        path: /etc/rancher/k3s
+        state: directory
+        mode: '0755'
+    # copy k3s config from templates
+    - name: copy k3s config
+      template:
+        src: templates/config.j2
+        dest: /etc/rancher/k3s/config.yaml
+        mode: '0755'
+    # main command to install you should to work with the template file 
+    - name: install k3s agent
+      shell: curl -sfL https://get.k3s.io | K3S_URL="{{ ip_k3s_master }}" K3S_TOKEN='{{ node_token.stdout }}' sh -
+      vars:
+        node_token: "{{ hostvars['worker1']['node_token'] }}"
+
+    # - debug:
+    #     msg: "Значение переменной tokentest с хоста worker1: {{ node_token.stdout }}"
+    #   vars:
+    #     node_token: "{{ hostvars['worker1']['node_token'] }}"
+

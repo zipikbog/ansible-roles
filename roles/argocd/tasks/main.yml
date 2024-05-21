@@ -1,0 +1,104 @@
+---
+- name: create kubeconfig
+  ansible.builtin.copy:
+    src: "{{ kubeconfig }}"
+    dest: /root/.kube/config
+    mode: '0644'
+    
+- name: creat namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ argocd_namespace }}"
+    state: present
+
+- name: copy argocd manifest
+  ansible.builtin.copy:
+    src: "{{ argocd_manifest }}"
+    dest: ~/argocd-install.yaml
+    mode: '0664'
+
+- name: install argocd
+  kubernetes.core.k8s:
+    namespace: argocd
+    src: ~/argocd-install.yaml
+    state: present
+
+- name: delete temp file
+  file:
+    path: ~/argocd-install.yaml
+    state: absent
+
+- name: Download argocd-image-updater
+  ansible.builtin.get_url:
+    url: "{{ argocd_image_updater }}"
+    dest: ~/argocd-image-updater.yaml
+    mode: '0664'
+
+- name: install argocd-image-updater
+  kubernetes.core.k8s:
+    namespace: argocd
+    src: ~/argocd-image-updater.yaml
+    state: present
+
+- name: delete temp file
+  file:
+    path: ~/argocd-image-updater.yaml
+    state: absent
+
+- name: Create TLS Secret in namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ secrettls }}"
+        namespace: "{{ argocd_namespace }}"
+      type: kubernetes.io/tls
+      data:
+        tls.crt: "{{ lookup('file', '{{ role_path }}/files/argocd.crt') | b64encode }}"
+        tls.key: "{{ lookup('file', '{{ role_path }}/files/argocd.key') | b64encode }}"
+
+- name: create ingress argocd
+  kubernetes.core.k8s:
+    state: present
+    template: 'templates/ingress-argocd.j2'
+
+- name: whait
+  pause:
+    seconds: 120
+
+- name: Get admin password argocd
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: argocd-initial-admin-secret
+        namespace: argocd
+  register: secret_info
+
+- name: decode
+  shell: echo "{{ secret_info.result.data.password }}" | base64 -d
+  register: decoded_password
+
+- name: Display decoded password
+  debug:
+    msg: "Decoded password: {{ decoded_password.stdout }}"
+
+- name: Download ArgoCD CLI binary
+  get_url:
+    url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+    dest: ./argocd-linux-amd64
+    mode: '0555'
+
+- name: Install ArgoCD CLI
+  shell: install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+
+- name: Remove temporary ArgoCD CLI binary
+  file:
+    path: ./argocd-linux-amd64
+    state: absent
+

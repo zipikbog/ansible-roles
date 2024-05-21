@@ -1,0 +1,3 @@
+---
+# vars file for singleurl
+tokentest: "{{ node_token.stdout }}"

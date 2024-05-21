@@ -1,0 +1,19 @@
+---
+- name: Deploy application with variables from argocd
+  become: true
+  hosts: k3s-masters
+  gather_facts: false
+  tasks:
+    - name: Include variables from argocd role
+      include_vars:
+        file: roles/argocd/vars/main.yml
+
+    - name: Run ArgoCD role
+      include_role:
+        name: argocd
+
+    - name: Run Application role with included variables
+      include_role:
+        name: application
+
+

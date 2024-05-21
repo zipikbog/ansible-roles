@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: "{{ argocd_namespace }}"
+  labels:
+    name: argocd-ingress
+spec:
+  rules:
+  - host: "{{ host_name }}"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: argocd-server
+            port: 
+              number: 80
+  tls:
+  - hosts:
+      - "{{ host_name }}"
+    secretName: "{{ secrettls }}"

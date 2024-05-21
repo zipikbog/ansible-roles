@@ -1,0 +1,52 @@
+---
+# - name: Download ArgoCD CLI binary
+#   get_url:
+#     url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+#     dest: ./argocd-linux-amd64
+#     mode: '0555'
+
+# - name: Install ArgoCD CLI
+#   shell: install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+
+# - name: Remove temporary ArgoCD CLI binary
+#   file:
+#     path: ./argocd-linux-amd64
+#     state: absent
+
+- name: test
+  debug:
+    msg: "{{ argo_password }}"
+- name: argocd login
+  shell: argocd login argocd.local --username "{{ argo_user }}" --password "{{ argo_password }}" --grpc-web
+  args:
+    stdin: y
+
+- name: copy ssh key
+  ansible.builtin.copy:
+    src: files/github
+    dest: ./github
+    mode: '0644'
+
+- name: connect repo
+  shell: argocd repo add git@github.com:zipikbog/argocd-test.git --ssh-private-key-path ./github
+
+- name: delete temp file
+  file:
+    path: ./github
+    state: absent
+
+- name: copy application
+  ansible.builtin.copy:
+    src: files/application-argo.yaml
+    dest: ./application-argo.yaml
+    mode: '0644'
+
+- name: Apply manifest to the cluster.
+  kubernetes.core.k8s:
+    state: present
+    src: ./application-argo.yaml
+
+- name: delete temp file
+  file:
+    path: ./application-argo.yaml
+    state: absent

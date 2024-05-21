@@ -1,0 +1,14 @@
+---
+url_argocd: "https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml"
+
+argocd_image_updater: "https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/manifests/install.yaml"
+
+argocd_namespace: "argocd"
+
+kubeconfig: "./k3s.yaml"
+
+argocd_manifest: "files/argocd-install.yaml"
+
+host_name: "argocd.local"
+
+secrettls: "argocd-server-tls"
